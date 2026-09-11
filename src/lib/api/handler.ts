@@ -6,7 +6,6 @@ import APIError from "@/lib/api/error";
 import { auth } from "@/lib/auth";
 import { apiResponse } from "@/lib/api/response";
 import { errorHandler } from "@/middlewares/error-handler";
-import { validateRequest } from "@/middlewares/validate-request";
 import {
     checkCache,
     getCachedData,
@@ -14,33 +13,20 @@ import {
     persistCache,
 } from "@/middlewares/handle-cache";
 
-import type {
-    CacheConfig,
-    HandlerResult,
-    InferValidatedData,
-    Session,
-    ValidationSchema,
-} from "@/types";
+import type { CacheConfig, HandlerResult, Session } from "@/types";
 
 type AuthMode = "cookie" | "database";
 
-export const asyncHandler = <T, S extends ValidationSchema | undefined = undefined>(
-    handler: (
-        context: Context,
-        session: Session,
-        validatedData: InferValidatedData<S>,
-    ) => Promise<HandlerResult<T>>,
+export const asyncHandler = <T>(
+    handler: (context: Context, session: Session) => Promise<HandlerResult<T>>,
     options?: {
-        validationSchema?: S;
         requireAuth?: boolean;
         auth?: AuthMode;
         cache?: CacheConfig;
     },
 ) => {
     return async (context: Context) => {
-        const { request, params, query, body, set } = context as Context & {
-            body?: unknown;
-        };
+        const { request, params, query, set } = context;
 
         try {
             const shouldRequireAuth = options?.requireAuth ?? true;
@@ -80,11 +66,6 @@ export const asyncHandler = <T, S extends ValidationSchema | undefined = undefin
                 throw APIError.unauthorized("You must be logged in to access this resource");
             }
 
-            const validatedData = await validateRequest(
-                { request, query, params, body },
-                options?.validationSchema,
-            );
-
             if (options?.cache && request.method === "GET") {
                 const cachedData = await getCachedData(options.cache, {
                     params: params as Record<string, string> | undefined,
@@ -109,7 +90,7 @@ export const asyncHandler = <T, S extends ValidationSchema | undefined = undefin
                 }
             }
 
-            const result = await handler(context, session, validatedData as InferValidatedData<S>);
+            const result = await handler(context, session);
 
             if (options?.cache?.invalidate) {
                 const ids = options.cache.invalidate({

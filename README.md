@@ -2,7 +2,7 @@
 
 A TypeScript backend starter built with [Bun](https://bun.com), [Elysia](https://elysiajs.com/), [Better Auth](https://www.better-auth.com/), [Drizzle ORM](https://orm.drizzle.team/), PostgreSQL, and Redis.
 
-The application currently exposes Better Auth at `/api/auth/*`. The reusable API helpers support authenticated handlers, Zod request validation, consistent success and error responses, ETag-based caching, and Redis-backed cache invalidation.
+The application currently exposes a health check at `/health` and Better Auth at `/api/auth/*`. The reusable API helpers support authenticated handlers, Zod request validation through Elysia, consistent success and error responses, ETag-based caching, and Redis-backed cache invalidation.
 
 ## Requirements
 
@@ -87,7 +87,7 @@ src/
 	lib/env.ts               Validated environment configuration
 	lib/api/                 API errors, responses, and handler wrapper
 	lib/db/                  Drizzle client and Better Auth schema
-	middlewares/             Error, cache, and request-validation helpers
+	middlewares/             Error and cache helpers
 	types/                   Shared API and handler types
 docker-compose.yml         Local PostgreSQL and Redis services
 .env.example               Environment variable template
@@ -95,7 +95,38 @@ docker-compose.yml         Local PostgreSQL and Redis services
 
 ## Adding Routes
 
-Define routes in `src/index.ts` or split them into a route module. For handlers that need the shared behavior, wrap the route logic with `asyncHandler` from `src/lib/api/handler.ts` and provide a Zod schema when request validation is needed.
+Define routes in `src/index.ts` or split them into a route module. Pass the `asyncHandler` result to Elysia and define native validation schemas in the route options. This pseudocode shows the overall usage pattern:
+
+```ts
+app.get(
+    "/your-route",
+    asyncHandler(
+        async (context, session) => {
+            // Read validated query, body, and route parameter values.
+            const { query, body, params } = context;
+
+            // Use the session and request data in your application logic.
+            const result = await yourService({ params, query, body, session });
+
+            return {
+                data: result,
+                message: "Operation completed successfully",
+            };
+        },
+        {
+            cache: {
+                table: "your-table",
+                getId: (context) => "your-cache-key",
+            },
+        },
+    ),
+    {
+        query: YourQuerySchema,
+        body: YourBodySchema,
+        params: YourParamsSchema,
+    },
+);
+```
 
 ## Database
 
