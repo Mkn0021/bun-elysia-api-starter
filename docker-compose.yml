@@ -1,0 +1,43 @@
+services:
+    postgres:
+        image: postgres:16
+        container_name: pg-dhi
+        restart: unless-stopped
+
+        ports:
+            - "127.0.0.1:5432:5432"
+
+        env_file:
+            - .env
+
+        volumes:
+            - ./pgdata:/var/lib/postgresql/data
+
+        security_opt:
+            - no-new-privileges:true
+
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    redis:
+        image: redis:7-alpine
+        container_name: redis-dhi
+        restart: unless-stopped
+
+        ports:
+            - "127.0.0.1:6379:6379"
+
+        volumes:
+            - ./redisdata:/data
+
+        security_opt:
+            - no-new-privileges:true
+
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5

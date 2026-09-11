@@ -1,0 +1,35 @@
+{
+    "name": "bun-elysia-starter",
+    "module": "src/index.ts",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "bun run --watch src/index.ts",
+        "start": "bun run src/index.ts",
+        "build": "bun build ./src/index.ts --outdir ./dist --target bun --minify",
+        "format": "prettier --write --no-ignore '**/*.{js,mjs,cjs,ts,tsx,json,md,css,scss,yaml,yml}' '!pgdata/**' '!redisdata/**'",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "drizzle-kit migrate",
+        "db:studio": "drizzle-kit studio",
+        "db:push": "drizzle-kit push"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/pg": "^8.23.1",
+        "bun-types": "^1.4.2",
+        "drizzle-kit": "^0.31.10",
+        "prettier": "^3.9.6"
+    },
+    "peerDependencies": {
+        "typescript": "^7.0.2"
+    },
+    "dependencies": {
+        "better-auth": "^1.7.4",
+        "dotenv": "^17.4.2",
+        "drizzle-orm": "^0.45.2",
+        "elysia": "^1.4.30",
+        "ioredis": "^6.0.0",
+        "pg": "^8.23.0",
+        "zod": "^4.6.2"
+    }
+}
